@@ -19,6 +19,12 @@ bridge = CvBridge()
 cv_image = None
 
 def image_callback(img_msg: Image):
+	"""
+	Called whenever new data is published to camera/image_raw.
+
+	:param img_msg: Image published
+	"""
+
 	global cv_image
 	rospy.loginfo(img_msg.header)
 
@@ -28,14 +34,19 @@ def image_callback(img_msg: Image):
 	except CvBridgeError as e:
 		rospy.logerr("CvBridge Error: {0}".format(e))
 	
-	# cv2.imshow("Robot Sees Dis", cv_image)
 	
 def give_frame_to_cv():
+	"""
+	Gives a single frame to the CV module
+	"""
+
 	global cv_image
 	cv2.imshow("Robot Sees Dis", cv_image)
+	cv2.waitKey(1)
 	return cv_image
 
 def main():
+
 	rospy.init_node("aimbots_cv")
 	rospy.loginfo("it's simulatorifying time")
 	cv2.namedWindow("Robot Sees Dis")
@@ -43,21 +54,27 @@ def main():
 	image_subscriber = rospy.Subscriber("camera/image_raw", Image, image_callback)
 
 	simple_synchronous, synchronous_with_tracker, multiprocessing_with_tracker = setup(
-		team_color=0, # red, 1 is blue
-		get_frame = give_frame_to_cv,
-		modeling=test_modeling,
-		tracker=test_tracking,
-		aiming=test_aiming,
-		live_camera = True,
-		kalman_filters = False,
-		with_gui = False,
-		filter_team_color = True
+		team_color			= 0, # red, 1 is blue
+		get_frame			= give_frame_to_cv,
+		modeling			= test_modeling,
+		tracker				= test_tracking,
+		aiming				= test_aiming,
+		live_camera			= True,
+		kalman_filters		= False,
+		with_gui 			= False,
+		filter_team_color	= True
 		# send_output=simulated_send_output, # this should be commented in once we actually add aiming 
 	)
 
+	# Run simple_synchronous in parallel
 	_thread.start_new_thread(simple_synchronous, ())
 	
-	rospy.spin()
+	try:
+		rospy.spin()
+	except KeyboardInterrupt:
+		rospy.loginfo("shutting down")
+	
+	cv2.destroyAllWindows()
 
 if __name__ == "__main__":
 	main()
