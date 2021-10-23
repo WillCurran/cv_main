@@ -45,6 +45,10 @@ def give_frame_to_cv():
 	cv2.waitKey(1)
 	return cv_image
 
+def print_frame(frame_number, color_image, boxes_and_confidences: tuple, horizontal_and_vertical_angle: tuple):
+	
+	print("Frame: {0}".format(frame_number))
+
 def main():
 
 	rospy.init_node("aimbots_cv")
@@ -52,10 +56,11 @@ def main():
 	cv2.namedWindow("Robot Sees Dis")
 
 	image_subscriber = rospy.Subscriber("camera/image_raw", Image, image_callback)
-
+	
 	simple_synchronous, synchronous_with_tracker, multiprocessing_with_tracker = setup(
 		team_color			= 0, # red, 1 is blue
 		get_frame			= give_frame_to_cv,
+		on_next_frame 		= print_frame,
 		modeling			= test_modeling,
 		tracker				= test_tracking,
 		aiming				= test_aiming,
@@ -63,18 +68,16 @@ def main():
 		kalman_filters		= False,
 		with_gui 			= False,
 		filter_team_color	= True
-		# send_output=simulated_send_output, # this should be commented in once we actually add aiming 
 	)
 
 	# Run simple_synchronous in parallel
 	_thread.start_new_thread(simple_synchronous, ())
-	
+
 	try:
 		rospy.spin()
 	except KeyboardInterrupt:
 		rospy.loginfo("shutting down")
-	
-	cv2.destroyAllWindows()
+		cv2.destroyAllWindows()
 
 if __name__ == "__main__":
 	main()
